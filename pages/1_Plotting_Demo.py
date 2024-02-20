@@ -21,7 +21,7 @@ from streamlit.hello.utils import show_code
 
 
 def plotting_demo():
-    progress_bar = st.sidebar.progress(0)
+    progress_bar = st.sidebar.progress(0) 
     status_text = st.sidebar.empty()
     last_rows = np.random.randn(1, 1)
     chart = st.line_chart(last_rows)
