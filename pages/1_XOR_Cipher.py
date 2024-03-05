@@ -28,6 +28,7 @@ def xor_decrypt(ciphertext, key):
 
 
 
+
 if st.button("Submit"):
     if not key :
         st.error("Invalid Key")
