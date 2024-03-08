@@ -1,63 +1,97 @@
 import streamlit as st
 
-st.header("Caesar Cipher")
+st.set_page_config(page_title="Block Cipher - XOR", layout="wide")
 
-text = input(st.text_area("Text:"))
-shift_keys = input(st.text_area("Shift keys:").split)
-shift_keys = [int(key) for key in shift_keys]
+st.title("Block Cipher - XOR")
 
-def encrypt_decrypt(text, shift_keys, ifdecrypt):
-    """
-    Encrypts a text using Caesar Cipher with a list of shift keys.
-    Args:
-        text: The text to encrypt.
-        shift_keys: A list of integers representing the shift values for each character.
-        ifdecrypt: flag if decrypt or encrypt
-    Returns:
-        A string containing the encrypted text if encrypt and plain text if decrypt
-    """
+def pad(data, block_size):
+    padding_length = block_size - len(data) % block_size  
+    padding = bytes([padding_length] * padding_length)  
+    return data + padding                         
+
+def unpad(data):
+    padding_length = data[-1]                                
+    return data[:-padding_length]                           
+
+def xor_encrypt_block(plaintext_block, key):
+    encrypted_block = b''
+    for i in range(len(plaintext_block)):
+        encrypted_block += bytes([plaintext_block[i] ^ key[i % len(key)]])
+    return encrypted_block                  
+
+def xor_decrypt_block(ciphertext_block, key):
+    return xor_encrypt_block(ciphertext_block, key)  
+
+def xor_encrypt(plaintext, key, block_size):
+    encrypted_data = b''
+    padded_plaintext = pad(plaintext, block_size)
     
-    result = ""
-    
-    if len(shift_keys) <= 1 or len(shift_keys) > len (text):
-        raise ValueError("Invalid shift keys length")
-    
-    for i, char in enumerate(text):
+    st.markdown("### Encrypted Blocks", unsafe_allow_html=True)
+    for x, i in enumerate(range(0, len(padded_plaintext), block_size)):
+        plaintext_block = padded_plaintext[i:i+block_size]
+        st.markdown(f"#### Plain block[{x}]:", unsafe_allow_html=True)
+        st.markdown(f"<b>Hex:</b> {plaintext_block.hex()}", unsafe_allow_html=True)
+        st.markdown(f"<b>Text:</b> {plaintext_block}", unsafe_allow_html=True)
+
+        encrypted_block = xor_encrypt_block(plaintext_block, key)
+        st.markdown(f"#### Cipher block[{x}]:", unsafe_allow_html=True)
+        st.markdown(f"<b>Hex:</b> {encrypted_block.hex()}", unsafe_allow_html=True)
+        st.markdown(f"<b>Text:</b> {encrypted_block}", unsafe_allow_html=True)
         
-        shift_key = shift_keys[i % len(shift_keys)]
+        encrypted_data += encrypted_block
+
+    return encrypted_data                              
+
+def xor_decrypt(ciphertext, key, block_size):
+    decrypted_data = b''
+    
+    st.markdown("### Decrypted Blocks", unsafe_allow_html=True)
+    for x, i in enumerate(range(0, len(ciphertext), block_size)):
+        ciphertext_block = ciphertext[i:i+block_size]
         
-        if 32 <= ord(char) <= 125:    
-            
-            if not ifdecrypt:
-                new_ascii = ord(char) + shift_key 
-            else:
-                new_ascii = ord(char) - shift_key 
-            
-            new_ascii = 32 + (new_ascii - 32) % 94   
-                
-            result += chr(new_ascii)
+        decrypted_block = xor_decrypt_block(ciphertext_block, key)
+        
+        st.markdown(f"#### Block[{x}]:", unsafe_allow_html=True)
+        st.markdown(f"<b>Hex:</b> {decrypted_block.hex()}", unsafe_allow_html=True)
+        st.markdown(f"<b>Text:</b> {decrypted_block}", unsafe_allow_html=True)
+        
+        decrypted_data += decrypted_block
+
+    unpadded_decrypted_data = unpad(decrypted_data)
+    
+    return unpadded_decrypted_data                              
+
+if _name_ == "_main_":
+    plaintext_input = st.text_area("Plain Text:")
+    key_input = st.text_input("Key:")
+    block_size_input = st.text_input("Block Size:")
+    submit_button = st.button("Submit")
+    
+    if submit_button:
+        if not plaintext_input.strip() or not key_input.strip() or not block_size_input.strip():
+            st.error("Please fill in all the fields.")
         else:
-            result += char
-        st.write(i, char, shift_key, result[i])
-        
-    return result
-    
-# Example usage
-#text = input()
-#shift_keys = input().split()
-#shift_keys = [int(key) for key in shift_keys]
-
-def Output(text, shift_keys, enc, dec):
-    st.write("Text: ", text)
-    st.write("Shift keys: ", *shift_keys)
-    st.write("Cipher: ", enc) 
-    st.write("Decrypted text: ", dec) 
-    
-enc = encrypt_decrypt(text, shift_keys, False)
-st.write("----------")
-    
-dec = encrypt_decrypt(enc, shift_keys, True)
-st.write("----------")    
-
-Output(text, shift_keys, enc, dec)   
- 
+            plaintext = bytes(plaintext_input.encode())
+            key = bytes(key_input.encode())
+            try:
+                block_size = int(block_size_input)
+                if block_size not in [8, 16, 32, 64, 128]:
+                    st.write('Block size must be one of 8, 16,  32, 64, or  128 bytes')
+                else:
+                    key = pad(key, block_size)
+                    encrypted_data = xor_encrypt(plaintext, key, block_size)
+                    decrypted_data = xor_decrypt(encrypted_data, key, block_size)
+                    st.markdown("#### Original plaintext:", unsafe_allow_html=True)
+                    st.code(plaintext)
+                    st.markdown("#### Key byte:", unsafe_allow_html=True)
+                    st.code(key)
+                    st.markdown("#### Key hex:", unsafe_allow_html=True)
+                    st.code(key.hex())
+                    st.markdown("#### Encrypted data:", unsafe_allow_html=True)
+                    st.code(encrypted_data.hex())
+                    st.markdown("#### Decrypted data:", unsafe_allow_html=True)
+                    st.code(decrypted_data.hex())
+                    st.markdown("#### Decrypted data:", unsafe_allow_html=True)
+                    st.code(decrypted_data)
+            except ValueError:
+                st.error("Please enter a valid integer for block size.")
