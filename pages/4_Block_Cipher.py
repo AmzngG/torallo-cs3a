@@ -61,7 +61,7 @@ def xor_decrypt(ciphertext, key, block_size):
     
     return unpadded_decrypted_data                              
 
-if _name_ == "_main_":
+if __name__ == "_main_":
     plaintext_input = st.text_area("Plain Text:")
     key_input = st.text_input("Key:")
     block_size_input = st.text_input("Block Size:")
