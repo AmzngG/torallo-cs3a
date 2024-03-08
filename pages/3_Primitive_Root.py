@@ -76,5 +76,5 @@ def main():
     if st.button("Calculate"):
         print_primitive(int(p), int(prim_num))
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     main()
